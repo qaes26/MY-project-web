@@ -1,6 +1,6 @@
 const express = require('express');
-const puppeteer = require('puppeteer-core'); // تغيير هنا
-const chromium = require('@sparticuz/chromium'); // إضافة هنا
+const puppeteer = require('puppeteer-core');
+const chromium = require('@sparticuz/chromium');
 const path = require('path');
 
 const app = express();
@@ -24,15 +24,21 @@ app.get('/convert', async (req, res) => {
     try {
         // تحديث طريقة تشغيل Puppeteer-core
         browser = await puppeteer.launch({
-            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'], // استخدام وسيطات chromium الموصى بها
+            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security', '--no-zygote', '--single-process'], // تأكد من وجود هذه الوسيطات
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(), // تحديد مسار المتصفح
-            headless: chromium.headless // استخدام وضع headless الخاص بـ chromium
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless
         });
 
         const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+        // زيادة المهلة الزمنية لـ 90 ثانية (90000ms)
+        // استخدام waitUntil: 'domcontentloaded' بدلاً من 'networkidle0' قد يكون أسرع لبعض الصفحات
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
 
+        // يمكنك إضافة تأخير قصير هنا إذا كانت بعض الصفحات تحتاج وقتاً إضافياً لتحميل JS
+        // await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // توليد ملف PDF
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true
