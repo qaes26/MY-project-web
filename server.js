@@ -23,27 +23,33 @@ app.get('/convert', async (req, res) => {
     const url = req.query.url;
 
     if (!url) {
-        return res.status(400).send('Please provide a URL to convert.');
+        return res.status(400).json({ error: 'Please provide a URL to convert.' }); // استجابة JSON للخطأ
     }
 
     let browser;
     try {
         // تشغيل Puppeteer في وضع headless (بدون واجهة رسومية)
-        // إضافة خيارات لتناسب بيئات السحابة مثل Render
+        // إضافة خيارات لتناسب بيئات السحابة مثل Render (هذه الخيارات مهمة جداً)
         browser = await puppeteer.launch({
-            headless: true,
+            headless: true, // تأكد أنها true
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
+                '--disable-dev-shm-usage', // مهم لبعض بيئات الاستضافة
                 '--disable-gpu',
                 '--no-zygote',
-                '--single-process'
+                '--single-process',
+                '--disable-features=site-per-process', // قد يساعد في بعض الحالات
+                '--lang=en-US,en' // تحديد اللغة لمنع مشاكل التحويل
             ]
         });
 
         const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 }); // زيادة مهلة التحميل
+        // ضبط مهلة التنقل ووقت انتظار الشبكة
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 }); // زيادة مهلة التحميل إلى 60 ثانية
+
+        // يمكنك إضافة تأخير قصير هنا إذا كانت بعض الصفحات تحتاج وقتاً إضافياً لتحميل JS
+        // await new Promise(resolve => setTimeout(resolve, 2000));
 
         // توليد ملف PDF
         const pdfBuffer = await page.pdf({
@@ -58,7 +64,8 @@ app.get('/convert', async (req, res) => {
 
     } catch (error) {
         console.error('Error converting URL to PDF:', error);
-        res.status(500).send('Failed to convert URL to PDF. Please ensure the URL is valid and accessible.');
+        // إرسال رسالة خطأ بصيغة JSON للواجهة الأمامية
+        res.status(500).json({ error: `Failed to convert URL to PDF: ${error.message}` });
     } finally {
         if (browser) {
             await browser.close(); // إغلاق المتصفح لتحرير الموارد

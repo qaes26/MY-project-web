@@ -3,20 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qaes ai: محول الروابط إلى PDF</title>
+    <title>Qaes PDF - محول الروابط إلى PDF</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>Qaes ai: محول الروابط إلى PDF</h1>
-        <p>أدخل رابط أي موقع لتحويله إلى ملف PDF.</p>
-        <div class="input-group">
-            <input type="url" id="urlInput" placeholder="أدخل الرابط هنا (مثال: https://www.example.com)" required>
-            <button id="convertBtn">تحويل إلى PDF</button>
-        </div>
-        <div id="message" class="message"></div>
-        <div id="loading" class="loading" style="display:none;">جاري التحويل... الرجاء الانتظار</div>
+        <header>
+            <h1>Qaes PDF</h1>
+            <h2>محول الروابط إلى PDF بسهولة وفعالية</h2>
+            <p class="developer-info">موقع من إعداد الطالب: قيس طلال الجازي</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <input type="url" id="url-input" placeholder="ادخل رابط أي موقع لتحويله إلى ملف PDF..." required>
+                <button id="convert-btn">تحويل إلى PDF</button>
+            </div>
+            <div id="status-message" class="status-message"></div>
+            <p class="example-text">
+                مثال: أدخل رابط مثل <a href="http://example.com" target="_blank" rel="noopener noreferrer">http://example.com</a> أو أي رابط صفحة ويب أخرى.
+            </p>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Qaes AI. جميع الحقوق محفوظة.</p>
+        </footer>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

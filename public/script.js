@@ -1,72 +1,50 @@
-// script.js
-document.addEventListener('DOMContentLoaded', () => {
-    const urlInput = document.getElementById('urlInput');
-    const convertBtn = document.getElementById('convertBtn');
-    const messageDiv = document.getElementById('message');
-    const loadingDiv = document.getElementById('loading');
+document.getElementById('convert-btn').addEventListener('click', async () => {
+    const urlInput = document.getElementById('url-input');
+    const url = urlInput.value;
+    const statusDiv = document.getElementById('status-message');
 
-    // وظيفة لإظهار رسالة
-    const showMessage = (msg, type) => {
-        messageDiv.textContent = msg;
-        messageDiv.className = `message ${type}`; // إضافة فئة النوع (error/success)
-        messageDiv.style.display = 'block';
-    };
+    if (!url) {
+        statusDiv.textContent = 'Please enter a URL.';
+        statusDiv.style.color = 'red';
+        return;
+    }
 
-    // وظيفة لإخفاء الرسالة
-    const hideMessage = () => {
-        messageDiv.style.display = 'none';
-        messageDiv.textContent = '';
-    };
+    statusDiv.textContent = 'Converting... Please wait.';
+    statusDiv.style.color = 'blue';
 
-    convertBtn.addEventListener('click', async () => {
-        const url = urlInput.value.trim(); // احصل على القيمة وأزل المسافات البيضاء
+    try {
+        const response = await fetch(`/convert?url=${encodeURIComponent(url)}`);
 
-        hideMessage(); // إخفاء أي رسالة سابقة
-        convertBtn.disabled = true; // تعطيل الزر أثناء التحويل
-        loadingDiv.style.display = 'block'; // إظهار رسالة التحميل
-
-        if (!url) {
-            showMessage('الرجاء إدخال رابط URL.', 'error');
-            convertBtn.disabled = false;
-            loadingDiv.style.display = 'none';
-            return;
-        }
-
-        try {
-            // إرسال طلب POST إلى الواجهة الخلفية
-            const response = await fetch('/convert-to-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ url: url })
-            });
-
-            if (!response.ok) {
-                // إذا كان هناك خطأ من الخادم (مثال: 400 Bad Request, 500 Internal Server Error)
-                const errorData = await response.json();
-                throw new Error(errorData.error || `خطأ في الخادم: ${response.statusText}`);
-            }
-
-            // إذا كان التحويل ناجحاً، يتم تنزيل الملف
+        if (response.ok) {
+            // إذا كانت الاستجابة OK (200)، فهي ملف PDF
             const blob = await response.blob();
             const downloadUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = downloadUrl;
-            a.download = 'converted_page.pdf'; // اسم الملف الذي سيتم تنزيله
+            a.download = 'converted.pdf';
             document.body.appendChild(a);
             a.click();
             a.remove();
-            window.URL.revokeObjectURL(downloadUrl); // تحرير الرابط
+            window.URL.revokeObjectURL(downloadUrl);
+            statusDiv.textContent = 'Conversion successful! PDF downloaded.';
+            statusDiv.style.color = 'green';
+        } else {
+            // إذا لم تكن الاستجابة OK، توقع استجابة JSON مع رسالة خطأ
+            // هذا الجزء هو التعديل الأساسي للتعامل مع رسائل الخطأ من الخادم
+            let errorData;
+            try {
+                errorData = await response.json(); // حاول تحليلها كـ JSON
+            } catch (jsonError) {
+                // إذا فشل التحليل كـ JSON، فهذا يعني أن الخادم أرسل HTML أو نص عادي
+                errorData = { error: `Server error: ${response.status} - ${await response.text()}` };
+            }
 
-            showMessage('تم تحويل الرابط بنجاح! بدأ التنزيل.', 'success');
-
-        } catch (error) {
-            console.error('حدث خطأ:', error);
-            showMessage(`فشل التحويل: ${error.message}`, 'error');
-        } finally {
-            convertBtn.disabled = false; // تفعيل الزر مرة أخرى
-            loadingDiv.style.display = 'none'; // إخفاء رسالة التحميل
+            statusDiv.textContent = `Conversion failed: ${errorData.error || 'Unknown error'}`;
+            statusDiv.style.color = 'red';
         }
-    });
+    } catch (error) {
+        console.error('Error during conversion:', error);
+        statusDiv.textContent = `Conversion failed: ${error.message}`;
+        statusDiv.style.color = 'red';
+    }
 });
